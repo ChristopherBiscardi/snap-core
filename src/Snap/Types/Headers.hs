@@ -48,14 +48,15 @@ module Snap.Types.Headers
   ) where
 
 ------------------------------------------------------------------------------
-import           Control.Arrow               (first)
-import           Data.ByteString.Char8       (ByteString)
-import qualified Data.ByteString.Char8       as S
-import           Data.CaseInsensitive        (CI)
-import qualified Data.CaseInsensitive        as CI
-import qualified Data.CaseInsensitive.Unsafe as CI
-import qualified Data.List                   as List
-import           Data.Maybe                  (fromMaybe)
+import           Control.Arrow ( first )
+import           Data.ByteString.Char8 ( ByteString )
+import qualified Data.ByteString.Char8 as S ( concat )
+import           Data.CaseInsensitive ( CI )
+import qualified Data.CaseInsensitive as CI ( CI(foldedCase) )
+import qualified Data.CaseInsensitive.Unsafe as CI ( unsafeMk )
+import qualified Data.List as List
+    ( foldr, filter, null, lookup, any, foldl' )
+import           Data.Maybe ( fromMaybe )
 import           Prelude                     hiding (foldr, lookup, null)
 
 ------------------------------------------------------------------------------

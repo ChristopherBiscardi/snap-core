@@ -5,19 +5,29 @@ module Snap.Internal.Routing where
 
 
 ------------------------------------------------------------------------------
-import           Control.Applicative ((<|>))
-import           Data.ByteString (ByteString)
-import           Data.ByteString.Internal (c2w)
+import           Control.Applicative ( (<|>) )
+import           Data.ByteString ( ByteString )
+import           Data.ByteString.Internal ( c2w )
 import qualified Data.ByteString as B
-import           Data.Monoid
-import           Data.HashMap.Strict (HashMap)
+    ( splitWith, tail, null, length, intercalate, pack, head )
+import           Data.Monoid ( Monoid(..) )
+import           Data.HashMap.Strict ( HashMap )
 import qualified Data.HashMap.Strict as H
-import qualified Data.Map as Map
+    ( unionWith, fromList, lookup, empty, elems )
+import qualified Data.Map as Map ( unionWith, insertWith, empty )
 
 ------------------------------------------------------------------------------
 import           Snap.Internal.Http.Types
-import           Snap.Internal.Parsing
+    ( Request(rqContextPath, rqParams, rqPathInfo), Params )
+import           Snap.Internal.Parsing ( urlDecode )
 import           Snap.Internal.Types
+    ( MonadSnap,
+      updateContextPath,
+      pass,
+      modifyRequest,
+      localRequest,
+      getsRequest,
+      getRequest )
 
 
 ------------------------------------------------------------------------------

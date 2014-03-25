@@ -20,13 +20,18 @@ module Snap.Util.Proxy
   ) where
 
 ------------------------------------------------------------------------------
-import           Control.Applicative
-import           Control.Arrow (second)
+import           Control.Applicative ( Alternative((<|>)), (<$>) )
+import           Control.Arrow ( second )
 import qualified Data.ByteString.Char8 as S
-import           Data.Char (isSpace)
-import           Data.Maybe (fromJust)
+    ( spanEnd, readInt, dropWhile, breakEnd, break, drop )
+import           Data.Char ( isSpace )
+import           Data.Maybe ( fromJust )
 ------------------------------------------------------------------------------
 import           Snap.Core
+    ( MonadSnap,
+      Request(rqClientAddr, rqClientPort),
+      modifyRequest,
+      getHeader )
 ------------------------------------------------------------------------------
 
 

@@ -45,46 +45,89 @@ module Snap.Internal.Util.FileUploads
 
 ------------------------------------------------------------------------------
 import           Control.Applicative
-import           Control.Arrow
-import           Control.Exception.Lifted     (Exception, Handler (..),
-                                               SomeException (..), bracket,
-                                               catch, catches, fromException,
-                                               mask, throwIO, toException)
-import qualified Control.Exception.Lifted     as E
+    ( Applicative((*>), (<*), pure), Alternative((<|>)) )
+import           Control.Arrow ( Arrow(first) )
+import           Control.Exception.Lifted
+    ( Exception,
+      Handler(..),
+      SomeException(..),
+      bracket,
+      catch,
+      catches,
+      fromException,
+      mask,
+      throwIO,
+      toException )
+import qualified Control.Exception.Lifted as E ( try )
 import           Control.Monad
+    ( guard,
+      liftM,
+      Monad((>>=), return),
+      Functor(fmap),
+      when,
+      void,
+      sequence )
 import           Data.Attoparsec.Char8
-import qualified Data.Attoparsec.Char8        as Atto
-import           Data.ByteString.Char8        (ByteString)
-import qualified Data.ByteString.Char8        as S
-import           Data.ByteString.Internal     (c2w)
-import qualified Data.CaseInsensitive         as CI
-import           Data.Int
-import           Data.List                    hiding (takeWhile)
-import qualified Data.Map                     as Map
-import           Data.Maybe
-import           Data.Text                    (Text)
-import qualified Data.Text                    as T
-import qualified Data.Text.Encoding           as TE
-import           Data.Typeable
+    ( Parser, string, takeWhile, isEndOfLine )
+import qualified Data.Attoparsec.Char8 as Atto ( try )
+import           Data.ByteString.Char8 ( ByteString )
+import qualified Data.ByteString.Char8 as S ( concat )
+import           Data.ByteString.Internal ( c2w )
+import qualified Data.CaseInsensitive as CI ( mk )
+import           Data.Int ( Int, Int64 )
+import           Data.List ( (++), concat, map, find )
+import qualified Data.Map as Map ( size, insertWith' )
+import           Data.Maybe ( Maybe(..), maybe, fromMaybe )
+import           Data.Text ( Text )
+import qualified Data.Text as T ( unpack, pack, concat )
+import qualified Data.Text.Encoding as TE ( decodeUtf8 )
+import           Data.Typeable ( Typeable, cast )
 #if MIN_VERSION_base(4,6,0)
 import           Prelude                      hiding (getLine, takeWhile)
 #else
 import           Prelude                      hiding (catch, getLine, takeWhile)
 #endif
-import           System.Directory
-import           System.FilePath              ((</>))
-import           System.IO                    hiding (isEOF)
-import           System.IO.Streams            (InputStream, MatchInfo (..),
-                                               RateTooSlowException,
-                                               TooManyBytesReadException,
-                                               search)
-import qualified System.IO.Streams            as Streams
-import           System.IO.Streams.Attoparsec
-import           System.PosixCompat.Temp      (mkstemp)
+import           System.Directory ( removeFile )
+import           System.FilePath ( (</>) )
+import           System.IO
+    ( Handle, BufferMode(NoBuffering), hSetBuffering, hClose )
+import           System.IO.Streams
+    ( InputStream,
+      MatchInfo(..),
+      RateTooSlowException,
+      TooManyBytesReadException,
+      search )
+import qualified System.IO.Streams as Streams
+    ( toList,
+      read,
+      makeInputStream,
+      connect,
+      atEOF,
+      handleToOutputStream,
+      skipToEof,
+      throwIfTooSlow,
+      throwIfProducesMoreThan )
+import           System.IO.Streams.Attoparsec ( parseFromStream )
+import           System.PosixCompat.Temp ( mkstemp )
 ------------------------------------------------------------------------------
 import           Snap.Core
+    ( Headers,
+      MonadSnap,
+      Request(rqParams, rqPostParams),
+      HasHeaders(headers),
+      terminateConnection,
+      runRequestBody,
+      putRequest,
+      getTimeoutModifier,
+      getRequest,
+      getHeader )
 import           Snap.Internal.Parsing
-import qualified Snap.Types.Headers           as H
+    ( pValueWithParameters,
+      pHeaders,
+      pContentTypeWithParameters,
+      fullyParse,
+      crlf )
+import qualified Snap.Types.Headers as H ( fromList )
 
 
 ------------------------------------------------------------------------------

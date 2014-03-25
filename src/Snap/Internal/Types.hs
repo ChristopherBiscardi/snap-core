@@ -89,45 +89,118 @@ module Snap.Internal.Types
 
 ------------------------------------------------------------------------------
 import           Blaze.ByteString.Builder
+    ( Builder, fromLazyByteString, fromByteString )
 import           Blaze.ByteString.Builder.Char.Utf8
+    ( fromText, fromLazyText )
 import           Control.Applicative
-import           Control.Exception.Lifted           (ErrorCall (..), Exception,
-                                                     Handler (..),
-                                                     SomeException (..), catch,
-                                                     catches, mask, onException,
-                                                     throwIO)
+    ( Applicative((<*>), pure), Alternative((<|>), empty), (<$>) )
+import           Control.Exception.Lifted
+    ( ErrorCall(..),
+      Exception,
+      Handler(..),
+      SomeException(..),
+      catch,
+      catches,
+      mask,
+      onException,
+      throwIO )
 import           Control.Monad
-import           Control.Monad.Base
-import           Control.Monad.IO.Class
-import           Control.Monad.Trans.Control
-import           Control.Monad.Trans.State
-import           Data.ByteString.Char8              (ByteString)
-import qualified Data.ByteString.Char8              as S
-import qualified Data.ByteString.Internal           as S
-import qualified Data.ByteString.Lazy.Char8         as L
-import           Data.CaseInsensitive               (CI)
-import           Data.Maybe
-import qualified Data.Text                          as T
-import qualified Data.Text.Lazy                     as LT
-import           Data.Time
+    ( liftM, Monad(..), Functor(..), MonadPlus(..), ap, unless, (=<<) )
+import           Control.Monad.Base ( MonadBase(..) )
+import           Control.Monad.IO.Class ( MonadIO(..) )
+import           Control.Monad.Trans.Control ( MonadBaseControl(..) )
+import           Control.Monad.Trans.State ( StateT(..) )
+import           Data.ByteString.Char8 ( ByteString )
+import qualified Data.ByteString.Char8 as S
+    ( takeWhile,
+      dropWhile,
+      break,
+      take,
+      length,
+      intercalate,
+      drop,
+      concat )
+import qualified Data.ByteString.Internal as S
+    ( inlinePerformIO, create )
+import qualified Data.ByteString.Lazy.Char8 as L
+    ( ByteString, fromChunks )
+import           Data.CaseInsensitive ( CI )
+import           Data.Maybe ( Maybe(..), maybe, listToMaybe )
+import qualified Data.Text as T ( Text )
+import qualified Data.Text.Lazy as LT ( Text )
+import           Data.Time ( UTCTime(UTCTime), Day(ModifiedJulianDay) )
 import           Data.Typeable
-import           Data.Word                          (Word8, Word64)
-import           Foreign.Ptr                        (Ptr, plusPtr)
-import           Foreign.Storable                   (poke)
+    ( Typeable, Typeable1(..), TyCon, mkTyConApp, mkTyCon3 )
+import           Data.Word ( Word8, Word64 )
+import           Foreign.Ptr ( Ptr, plusPtr )
+import           Foreign.Storable ( poke )
 #if MIN_VERSION_base(4,6,0)
 import           Prelude                            hiding (take)
 #else
 import           Prelude                            hiding (catch, take)
 #endif
-import           System.IO.Streams                  (InputStream, OutputStream)
-import qualified System.IO.Streams                  as Streams
-import           System.Posix.Types                 (FileOffset)
-import           System.PosixCompat.Files           hiding (setFileSize)
+import           System.IO.Streams ( InputStream, OutputStream )
+import qualified System.IO.Streams as Streams
+    ( RateTooSlowException,
+      toList,
+      fromList,
+      write,
+      connect,
+      skipToEof,
+      mapM,
+      throwIfTooSlow,
+      throwIfProducesMoreThan )
+import           System.Posix.Types ( FileOffset )
+import           System.PosixCompat.Files ( fileSize, getFileStatus )
 ------------------------------------------------------------------------------
-import qualified Data.Readable                      as R
+import qualified Data.Readable as R ( Readable(fromBS) )
 import           Snap.Internal.Http.Types
-import           Snap.Internal.Parsing              (urlDecode)
-import qualified Snap.Types.Headers                 as H
+    ( StreamProc,
+      ResponseBody(..),
+      Response(..),
+      Request(..),
+      Params,
+      Method(..),
+      HttpVersion,
+      HasHeaders(..),
+      Cookie(..),
+      toStr,
+      statusReasonMap,
+      set_c_locale,
+      setResponseStatus,
+      setResponseCode,
+      setResponseBody,
+      setHeader,
+      setContentType,
+      setContentLength,
+      rspBodyToEnum,
+      rspBodyMap,
+      rqSetParam,
+      rqQueryParam,
+      rqPostParam,
+      rqParam,
+      rqModifyParams,
+      parseHttpTime,
+      normalizeMethod,
+      modifyResponseCookie,
+      modifyResponseBody,
+      listHeaders,
+      getResponseCookies,
+      getResponseCookie,
+      getHeader,
+      formatLogTime,
+      formatHttpTime,
+      emptyResponse,
+      deleteResponseCookie,
+      deleteHeader,
+      clearContentLength,
+      c_parse_http_time,
+      c_format_log_time,
+      c_format_http_time,
+      addResponseCookie,
+      addHeader )
+import           Snap.Internal.Parsing ( urlDecode )
+import qualified Snap.Types.Headers as H ( toList, fromList )
 ------------------------------------------------------------------------------
 
 

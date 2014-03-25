@@ -7,30 +7,80 @@
 module Snap.Internal.Parsing where
 ------------------------------------------------------------------------------
 import           Blaze.ByteString.Builder
+    ( Builder, fromWord8, toByteString, fromByteString )
 import           Control.Applicative
-import           Control.Arrow                    (first, second)
+    ( Applicative((*>), (<*), pure),
+      Alternative((<|>), many),
+      (<$>),
+      liftA2 )
+import           Control.Arrow ( first, second )
 import           Control.Monad
+    ( liftM, Monad(return), MonadPlus(mzero), when )
 import           Data.Attoparsec.ByteString.Char8
-import           Data.Bits
-import           Data.ByteString.Char8            (ByteString)
-import qualified Data.ByteString.Char8            as S
-import           Data.ByteString.Internal         (c2w, w2c)
-import           Data.CaseInsensitive             (CI)
-import qualified Data.CaseInsensitive             as CI
-import           Data.Char                        hiding (digitToInt, isDigit,
-                                                   isSpace)
-import           Data.Int
-import           Data.List                        (intersperse)
-import           Data.Map                         (Map)
-import qualified Data.Map                         as Map
-import           Data.Maybe
-import           Data.Monoid
-import           Data.Word
-import           GHC.Exts
-import           GHC.Word                         (Word8 (..))
+    ( IResult(Done, Fail, Partial),
+      Result,
+      Parser,
+      option,
+      choice,
+      take,
+      string,
+      parse,
+      endOfInput,
+      takeWhile1,
+      takeWhile,
+      takeTill,
+      satisfy,
+      letter_ascii,
+      isSpace,
+      isDigit,
+      inClass,
+      decimal,
+      char,
+      anyChar,
+      feed )
+import           Data.Bits ( Bits((.&.), (.|.), unsafeShiftL) )
+import           Data.ByteString.Char8 ( ByteString )
+import qualified Data.ByteString.Char8 as S
+    ( concat,
+      uncons,
+      splitWith,
+      spanEnd,
+      span,
+      singleton,
+      foldl',
+      cons,
+      break,
+      all,
+      null,
+      length,
+      isPrefixOf,
+      empty,
+      drop,
+      append )
+import           Data.ByteString.Internal ( c2w, w2c )
+import           Data.CaseInsensitive ( CI )
+import qualified Data.CaseInsensitive as CI ( mk )
+import           Data.Char
+    ( Char,
+      ord,
+      isHexDigit,
+      isControl,
+      isAscii,
+      isAlphaNum,
+      isAlpha,
+      intToDigit )
+import           Data.Int ( Int64 )
+import           Data.List ( intersperse )
+import           Data.Map ( Map )
+import qualified Data.Map as Map ( toList, empty, insertWith' )
+import           Data.Maybe ( Maybe(..), maybe )
+import           Data.Monoid ( Monoid(mappend, mconcat, mempty) )
+import           Data.Word ( Word8 )
+import           GHC.Exts ( Int(I#), uncheckedShiftRL#, word2Int# )
+import           GHC.Word ( Word8(..) )
 import           Prelude                          hiding (head, take, takeWhile)
 ------------------------------------------------------------------------------
-import           Snap.Internal.Http.Types
+import           Snap.Internal.Http.Types ( Cookie(Cookie) )
 
 
 ------------------------------------------------------------------------------

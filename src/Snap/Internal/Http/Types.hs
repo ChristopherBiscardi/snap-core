@@ -18,26 +18,28 @@
 module Snap.Internal.Http.Types where
 
 ------------------------------------------------------------------------------
-import           Blaze.ByteString.Builder
-import           Control.Monad            (unless)
-import           Data.ByteString          (ByteString)
-import qualified Data.ByteString          as S
-import qualified Data.ByteString.Char8    as B
-import           Data.ByteString.Internal (w2c)
-import           Data.CaseInsensitive     (CI)
-import qualified Data.CaseInsensitive     as CI
-import qualified Data.IntMap              as IM
-import           Data.List                hiding (take)
-import           Data.Map                 (Map)
-import qualified Data.Map                 as Map
-import           Data.Maybe
-import           Data.Time.Clock
-import           Data.Word                (Word64)
-import           Foreign.C.Types
-import           Prelude                  hiding (take)
+import           Blaze.ByteString.Builder ( Builder, fromByteString )
+import           Control.Monad ( unless )
+import           Data.ByteString ( ByteString )
+import qualified Data.ByteString as S ( unpack )
+import qualified Data.ByteString.Char8 as B ( unpack )
+import           Data.ByteString.Internal ( w2c )
+import           Data.CaseInsensitive ( CI )
+import qualified Data.CaseInsensitive as CI ( CI(original) )
+import qualified Data.IntMap as IM ( IntMap, lookup, fromList )
+import           Data.List ( (++), concat, map, concatMap, intersperse )
+import           Data.Map ( Map )
+import qualified Data.Map as Map
+    ( toAscList, lookup, insert, empty, elems, delete )
+import           Data.Maybe ( Maybe(..), maybe, fromMaybe )
+import           Data.Time.Clock ( UTCTime )
+import           Data.Word ()
+import           Foreign.C.Types ( CChar(CChar), CTime(..) )
 import           System.IO
-import           System.IO.Streams        (InputStream, OutputStream)
-import qualified System.IO.Streams        as Streams
+    ( IOMode(ReadMode), SeekMode(AbsoluteSeek), withBinaryFile, hSeek )
+import           System.IO.Streams ( InputStream, OutputStream )
+import qualified System.IO.Streams as Streams
+    ( connect, handleToInputStream, withFileAsInput, mapM, takeBytes )
 
 ------------------------------------------------------------------------------
 #ifdef PORTABLE
@@ -46,15 +48,17 @@ import           Data.Time.Format
 import           Data.Time.LocalTime
 import           System.Locale            (defaultTimeLocale)
 #else
-import qualified Data.ByteString.Unsafe   as S
-import           Data.Time.Format         ()
-import           Foreign
-import           Foreign.C.String
+import qualified Data.ByteString.Unsafe as S
+    ( unsafeUseAsCString, unsafePackMallocCString )
+import           Data.Time.Format ()
+import           Foreign ( Word64, mallocBytes )
+import           Foreign.C.String ( CString )
 #endif
 
 ------------------------------------------------------------------------------
-import           Snap.Types.Headers       (Headers)
-import qualified Snap.Types.Headers       as H
+import           Snap.Types.Headers ( Headers )
+import qualified Snap.Types.Headers as H
+    ( toList, set, lookup, insert, empty, delete )
 
 
 #ifndef PORTABLE
